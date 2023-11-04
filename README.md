@@ -14,6 +14,6 @@ python3 game.py
 ideas:
 
 -AI vs AI - test with different depths and minimax vs alpha-beta prunning (when comparing times)
-- create a tutorial that teach the rules and some strategies?
-- hints (best next move that a player can do)
-- death flag (end game in 5 turns)
+-create a tutorial that teach the rules and some strategies?
+-hints (best next move that a player can do)
+-death flag (end game in 5 turns)

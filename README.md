@@ -5,6 +5,7 @@ Kevin Byon kbyon@csu.fullerton.edu
 
 Daniel Wu d.wy@csu.fullerton.edu
 
+Pedro Morales pedrom2@csu.fullerton.edu
 
 run
 python3 game.py

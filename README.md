@@ -7,7 +7,8 @@ Daniel Wu d.wu@csu.fullerton.edu
 
 Pedro Morales pedrom2@csu.fullerton.edu
 
-run
+how to run:
+
 python3 game.py
 
 

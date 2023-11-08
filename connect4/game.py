@@ -74,15 +74,20 @@ def is_full(board):
     return all(cell != EMPTY for cell in board[0])
 
 def get_player_move():
-    while True:
-        try:
-            col = int(input("Enter your move (1-" + str(COLS) + "): ")) - 1
-            if col >= 0 and col < COLS and is_valid_move(board, col):
-                return col
-            else:
-                print("Invalid move. Try again.")
-        except ValueError:
-            print("Invalid input. Please enter a number between 1 and 7.")
+    # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
+    best_score = -float('inf')
+    best_move = None
+    for col in range(COLS):
+        if is_valid_move(board, col):
+            board_copy = board.copy()
+            make_move(board_copy, col, COMPUTER)
+            score = minimax(board_copy, 3, False, -float('inf'), float('inf'))  # Depth can be adjusted.
+
+            if score > best_score:
+                best_score = score
+                best_move = col
+
+    return best_move
 
 def get_computer_move(board):
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.

@@ -22,8 +22,8 @@ class Button:
         font = pygame.font.Font(None, int(height / 1.5))
         self._text = font.render(text, True, (255, 255, 255))
         self._textpos = self._text.get_rect()
-        self._textpos.centerx = self.rect.centerx
-        self._textpos.centery = self.rect.centery
+        self._textpos.centerx = self._rect.centerx
+        self._textpos.centery = self._rect.centery
 
     @property
     def rect(self):
@@ -42,7 +42,7 @@ class Button:
     
     def draw(self):
         """Draw the button"""
-        pygame.draw.rect(self._screen, self._color, self._rect, self._width, self._border_radius)
+        pygame.draw.rect(self._screen, self._color, self._rect, border_radius=self._border_radius)
         self._screen.blit(self._text, self._textpos)
 
     def process_events(self, event):

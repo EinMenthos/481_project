@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 # Constants for the game
 EMPTY = 0
@@ -76,20 +77,25 @@ def is_full(board):
 def get_player_move():
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
     if gameMode == 0:
-        print("AI vs AI mode")
+        #print("AI vs AI mode")
+        #columns = list(range(COLS))
+        columns = [col for col in range(COLS) if is_valid_move(board, col)]
+        random.shuffle(columns)
         best_score = -float('inf')
         best_move = None
-        for col in range(COLS):
+        #for col in range(COLS):
+        for col in columns:
             if is_valid_move(board, col):
                 board_copy = board.copy()
                 make_move(board_copy, col, COMPUTER)
-                score = minimax(board_copy, 3, False, -float('inf'), float('inf'))  # Depth can be adjusted.
+                d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
+                score = minimax(board_copy, d, False, -float('inf'), float('inf'), 0)  # Depth can be adjusted.
                 if score > best_score:
                     best_score = score
                     best_move = col
         return best_move
     else:
-        print("Player vs AI mode")
+        #print("Player vs AI mode")
         while True:
             try:
                 col = int(input("Enter your move (1-" + str(COLS) + "): ")) - 1
@@ -104,22 +110,28 @@ def get_player_move():
 
 def get_computer_move(board):
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
+    #columns = list(range(COLS))
+    columns = [col for col in range(COLS) if is_valid_move(board, col)]
+    random.shuffle(columns)
     best_score = -float('inf')
     best_move = None
-    for col in range(COLS):
+    #for col in range(COLS):
+    for col in columns:
         if is_valid_move(board, col):
             board_copy = board.copy()
             make_move(board_copy, col, COMPUTER)
-            score = minimax(board_copy, 3, False, -float('inf'), float('inf'))  # Depth can be adjusted.
+            d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
+            score = minimax(board_copy, d, False, -float('inf'), float('inf'), evalFuncMode)  # Depth can be adjusted.
 
             if score > best_score:
                 best_score = score
                 best_move = col
     return best_move
 
-def minimax(board, depth, is_maximizing, alpha, beta):
+def minimax(board, depth, is_maximizing, alpha, beta, EFmode):
+    #print(EFmode)
     if depth == 0 or check_winner(board, PLAYER) or check_winner(board, COMPUTER) or is_full(board):
-        return evaluate_board(board)
+        return evaluate_board(board, EFmode)
 
     if is_maximizing:
         max_eval = -float('inf')
@@ -127,7 +139,7 @@ def minimax(board, depth, is_maximizing, alpha, beta):
             if is_valid_move(board, col):
                 board_copy = board.copy()
                 make_move(board_copy, col, COMPUTER)
-                eval = minimax(board_copy, depth - 1, False, alpha, beta)
+                eval = minimax(board_copy, depth - 1, False, alpha, beta, EFmode)
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
                 if beta <= alpha:
@@ -139,15 +151,15 @@ def minimax(board, depth, is_maximizing, alpha, beta):
             if is_valid_move(board, col):
                 board_copy = board.copy()
                 make_move(board_copy, col, PLAYER)
-                eval = minimax(board_copy, depth - 1, True, alpha, beta)
+                eval = minimax(board_copy, depth - 1, True, alpha, beta, EFmode)
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
                 if beta <= alpha:
                     break
         return min_eval
 
-def evaluate_board(board):
-    if evalFuncMode == 0:
+def evaluate_board(board, EFmode):
+    #if evalFuncMode == 0:
         #print("using strategy 0: no traps")
         score = 0
 
@@ -161,52 +173,68 @@ def evaluate_board(board):
         for row in range(ROWS):
             for col in range(COLS - 3):
                 window = [board[row][col + i] for i in range(4)]
-                score += evaluate_window(window, COMPUTER)
+                score += evaluate_window(window, COMPUTER, EFmode)
 
         for col in range(COLS):
             for row in range(ROWS - 3):
                 window = [board[row + i][col] for i in range(4)]
-                score += evaluate_window(window, COMPUTER)
+                score += evaluate_window(window, COMPUTER, EFmode)
 
         for row in range(ROWS - 3):
             for col in range(COLS - 3):
                 window = [board[row + i][col + i] for i in range(4)]
-                score += evaluate_window(window, COMPUTER)
+                score += evaluate_window(window, COMPUTER, EFmode)
 
         for row in range(ROWS - 3):
             for col in range(COLS - 3):
                 window = [board[row + 3 - i][col + i] for i in range(4)]
-                score += evaluate_window(window, COMPUTER)
+                score += evaluate_window(window, COMPUTER, EFmode)
 
         return score
-    if evalFuncMode == 1:
-        print("using strategy 1: trying to conquer the center")
-    if evalFuncMode == 2:
-        print("using strategy 2: building a 7 trap.")
-    if evalFuncMode == 3:
+    #if evalFuncMode == 1:
+    #    print("using strategy 1: trying to conquer the center")
+    #if evalFuncMode == 2:
+    #    print("using strategy 2: building a 7 trap.")
+    #if evalFuncMode == 3:
+    #    print("using strategy 3: evaluating surrounding discs.")
+
+
+def evaluate_window(window, player, EFmode):
+    score = 0
+    opponent = PLAYER if player == COMPUTER else COMPUTER
+
+    if window.count(player) == 4:
+        score += 100
+    elif window.count(player) == 3 and window.count(EMPTY) == 1:
+        score += 5
+    elif window.count(player) == 2 and window.count(EMPTY) == 2:
+        score += 2
+
+    if window.count(opponent) == 3 and window.count(EMPTY) == 1:
+        score -= 4
+
+    if EFmode >= 1:
+        #print("using strategy 1: trying to conquer the center")
+        # Conquer the center strategy: Assign higher scores to positions closer to the center
+        center_col = COLS // 2
+        for i in range(4):
+            if window[i] == player:
+                score += abs(center_col - (i + 1))  # Adjust the weight as needed
+    
+    if EFmode >= 2:
+        #print("using strategy 2: building a 7 trap.")
+        # 7-trap strategy
+        if window.count(player) == 1 and window.count(EMPTY) == 3:
+            # Check for a "7-trap" pattern: [X, ., ., O] or [O, ., ., X]
+            if window[0] == player and window[3] == player:
+                score += 10
+    
+    if EFmode == 3:
         print("using strategy 3: evaluating surrounding discs.")
 
+    return score
 
-def evaluate_window(window, player):
-    if evalFuncMode == 0:
-        score = 0
-        opponent = PLAYER if player == COMPUTER else COMPUTER
 
-        if window.count(player) == 4:
-            score += 100
-        elif window.count(player) == 3 and window.count(EMPTY) == 1:
-            score += 5
-        elif window.count(player) == 2 and window.count(EMPTY) == 2:
-            score += 2
-
-        if window.count(opponent) == 3 and window.count(EMPTY) == 1:
-            score -= 4
-
-        return score
-    if evalFuncMode == 1:
-        print("using strategy 1")
-    if evalFuncMode == 2:
-        print("using strategy 2")
 
 def main():
     print("Welcome to Connect Four!")
@@ -216,44 +244,60 @@ def main():
     #evalFuncMode 0 = default, 1 = center, 2 = seven trap, 3 = surrounding, 
     global evalFuncMode
     evalFuncMode = 0
+
     #game mode 0 = AI vs AI, mode 1 = player vs AI
     global gameMode
     gameMode = 0
     while True:
-        print_board(board)
+        if gameMode == 1:
+            print_board(board)
 
         if player_turn:
-            col = get_player_move()
+            col = get_player_move()     # this function will calculate the best move for p1
             make_move(board, col, PLAYER)
-            print('player movement: ' + str(col+1))
+            if gameMode == 1:
+                print('Player movement: ' + str(col+1))
             if check_winner(board, PLAYER):
                 print_board(board)
-                print("Player wins!")
+                if gameMode == 1:
+                    print("Player wins!")
+                else:
+                    print("AI (default) wins!")
                 player_wins += 1
-                save_win_counts(player_wins, computer_wins, draws)  # Save win counts to a file
-                print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
+                #save_win_counts(player_wins, computer_wins, draws)  # Save win counts to a file
+                #print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
                 break
         else:
-            col = get_computer_move(board)
+            col = get_computer_move(board)  #this function will calculate the best move for p2
             make_move(board, col, COMPUTER)
-            print('CPU movement: ' + str(col+1))
+            if gameMode == 1:
+                print('AI movement: ' + str(col+1))
             if check_winner(board, COMPUTER):
                 print_board(board)
-                print("Computer wins!")
+                if gameMode == 1:
+                    print("AI wins!")
+                else:
+                    print("AI (customized) wins!")
                 computer_wins += 1
-                save_win_counts(player_wins, computer_wins, draws)
-                print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
+                #save_win_counts(player_wins, computer_wins, draws)
+                #print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
                 break
 
         if is_full(board):
             print_board(board)
             print("It's a draw!") 
             draws += 1
-            save_win_counts(player_wins, computer_wins, draws)
-            print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
+            #save_win_counts(player_wins, computer_wins, draws)
+            #print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
             break
 
         player_turn = not player_turn
 
+    save_win_counts(player_wins, computer_wins, draws)  # Save win counts to a file
+    if gameMode == 1:
+        print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
+    else:
+        print('score: AI(default): ' + str(player_wins) + '\tAI(customized): ' + str(computer_wins) + '\tDraws: ' + str(draws))
 if __name__ == "__main__":
     main()
+

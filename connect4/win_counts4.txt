@@ -1,0 +1,4 @@
+49,34,17
+
+//data collected from 100 games with default EF vs EF with blocking enemy 7-trap.
+# This is a defensive strategy. It won't be effective if the opponent don't use it.

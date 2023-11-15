@@ -213,24 +213,73 @@ def evaluate_window(window, player, EFmode):
     if window.count(opponent) == 3 and window.count(EMPTY) == 1:
         score -= 4
 
-    if EFmode >= 1:
+    if EFmode == 1 or EFmode == -2:
         #print("using strategy 1: trying to conquer the center")
-        # Conquer the center strategy: Assign higher scores to positions closer to the center
+        # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
         center_col = COLS // 2
         for i in range(4):
             if window[i] == player:
                 score += abs(center_col - (i + 1))  # Adjust the weight as needed
     
-    if EFmode >= 2:
+    if EFmode == 2 or EFmode == -1:
         #print("using strategy 2: building a 7 trap.")
-        # 7-trap strategy
+        # 7-trap strategy - ATK
         if window.count(player) == 1 and window.count(EMPTY) == 3:
             # Check for a "7-trap" pattern: [X, ., ., O] or [O, ., ., X]
             if window[0] == player and window[3] == player:
                 score += 10
     
-    if EFmode == 3:
-        print("using strategy 3: evaluating surrounding discs.")
+    if EFmode == 3 or EFmode == -2:
+        #print("using strategy 3: evaluating surrounding discs.")
+        # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
+        for i in range(4):
+            # Check left
+            if i > 0 and window[i - 1] == player:
+                score += 1
+            # Check right
+            if i < 3 and window[i + 1] == player:
+                score += 1
+            # Check up
+            if window[i] == player and i < 2 and window[i + 2] == player:
+                score += 1
+            # Check down
+            if window[i] == player and i > 1 and window[i - 2] == player:
+                score += 1
+            # Check both diagonals
+            if i % 2 == 0 and window[i] == player and window[(i + 2) % 4] == player:
+                score += 1
+    if EFmode == 4 or EFmode == -2:
+        # Evaluate blocking opponent's trap - DEFENSIVE
+        for i in range(2):
+            if window[i] == opponent and window[i + 2] == opponent and window[i + 1] == EMPTY and window[(i + 3) % 4] == EMPTY:
+                score -= 8
+
+    if EFmode == 5 or EFmode == -1:
+        #7 trap again
+        for i in range(2):
+            if window[i] == player and window[i + 2] == player and window[i + 1] == EMPTY and window[(i + 3) % 4] == EMPTY:
+                score += 10
+
+    if EFmode == 6 or EFmode == -2:
+         # Check for horizontal fork
+        if window.count(player) == 2 and window.count(EMPTY) == 2:
+            if window.count(opponent) == 1:
+                score += 10
+        
+        # Check for vertical fork
+        if window.count(player) == 1 and window.count(EMPTY) == 3:
+            if window.count(opponent) == 2:
+                score += 10
+        
+        # Check for diagonal (positive slope) fork
+        if window.count(player) == 2 and window.count(EMPTY) == 2:
+            if window.count(opponent) == 1:
+                score += 10
+        
+        # Check for diagonal (negative slope) fork
+        if window.count(player) == 1 and window.count(EMPTY) == 3:
+            if window.count(opponent) == 2:
+                score += 10
 
     return score
 
@@ -243,7 +292,7 @@ def main():
     
     #evalFuncMode 0 = default, 1 = center, 2 = seven trap, 3 = surrounding, 
     global evalFuncMode
-    evalFuncMode = 0
+    evalFuncMode = -1
 
     #game mode 0 = AI vs AI, mode 1 = player vs AI
     global gameMode

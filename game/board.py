@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, math, sys
 from .disk import Disk
 from .player import Player
 
@@ -26,11 +26,14 @@ class Board:
                     self._rect.left + ((j + 1) * self._gap_x) + (self._disk_diameter * j) + self._disk_radius,
                     self._rect.top + ((i + 1) * self._gap_y) + (self._disk_diameter * i) + self._disk_radius
                 ),
-                self._disk_width
+                self._disk_diameter
             ) 
             for j in range(self._cols)] for i in range(self._rows)]
+        self._col_pos = [disk.center[0] for disk in self._disks[0]] # column centers
+        self._col_rects = [pygame.Rect(x - self._disk_diameter, self._rect.top, self._disk_diameter, self.rect.height) for x in self._col_pos]
         self._players = [] # list of players
         self.initialize_players() # create the players
+        self._preview_disk = Disk(self._screen, "red", (self._col_pos[0],150), self._disk_diameter) # disk on top of board 
         self._continue_playing = True
 
     @property
@@ -63,36 +66,68 @@ class Board:
         if self._game_type == 0: # AI vs AI
             self._players = [Player(colors[0], False), Player(colors[1], False)]
         else: # AI vs Human
-            self._players = [Player(colors[0], False), Player(colors[1], True)]
+            self._players = [Player(colors[0], True), Player(colors[1], True)]
 
         # shuffle the list of players 
         random.shuffle(self._players)    
 
     def draw(self):
         """Draws the game board and disks"""
+        # clear the screen
+        self._screen.fill((138,206,247))
+
+        # draw the game board
         pygame.draw.rect(self._screen, (45,92,214), self.rect, border_radius=5)
+
+        # draw each disk
         for i, row in enumerate(self.disks):
             for j, disk in enumerate(row):
                 disk.draw() 
-
-    def process_events(self, event):
+        
+        # draw the preview disk on top
+        self._preview_disk.draw()
+        
+    def run(self):
         """Process the game's events"""
         # run until player quits
         while self._continue_playing:
             # tracks the current player
             player_index = 0
 
-            # runs an instance (game) of Connect 4 based on a circular queue
-            while True:
-                current_player = self._players[player_index]
+            # tracks if player made a move
+            move_made = False
 
-                # check if player is human
-                if current_player.is_human:
-                    pass
-                else:
-                    pass
-                # switch players in order
-                player_index = (player_index + 1) % 2
+            # runs an instance (game) of Connect 4 based on a circular queue
+            while not move_made:
+                current_player = self._players[player_index]
+                
+                # update the preview disk's color
+                self._preview_disk.color = current_player.color
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit(0)
+                    
+                    # check if player is human
+                    if current_player.is_human:
+                        # get the mouse's current position
+                        point = pygame.mouse.get_pos()
+                        
+                        if event.type == pygame.MOUSEMOTION and self._rect.collidepoint(point):
+                            self._preview_disk.center = (point[0], 150)         
+                                    
+                        for rect in self._col_rects:
+                            point = rect.center
+                            if rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
+                                move_made = True 
+                    else:
+                        pass
+                    self.draw()
+
+                    pygame.display.update()
+
+            # switch players in order
+            player_index = (player_index + 1) % 2
 
 
 

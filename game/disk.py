@@ -22,14 +22,30 @@ class Disk(pygame.sprite.Sprite):
 
     @property
     def rect(self):
-        """Returns bounding rect"""
+        """Returns the disk's bounding rect"""
         return self._rect
     
     @property
     def center(self):
-        """Returns the sprite's center"""
+        """Returns the disk's center"""
         return self._center
     
+    @property
+    def color(self):
+        """Return the disk's color"""
+        return self._color
+    
+    @center.setter
+    def center(self, center):
+        """Setter to update the disk's center""" 
+        self._center = center
+        self._rect.center = center
+    
+    @color.setter
+    def color(self, color):
+        """Update sprite to match the new color"""
+        self._sprite = pygame.transform.scale(Disk._images[color], (self._width, self._width))
+
     def draw(self):
         """Draw the sprite"""
         self._screen.blit(self._sprite, self.rect)

@@ -1,6 +1,7 @@
 import pygame, sys
 from pygame.locals import *
 from .button import Button
+from .board import Board
 
 # keeps track of game board size
 ROWS = None
@@ -26,11 +27,6 @@ class Scene:
         """Draw the scene"""
         self._screen.blit(self._screen, (0, 0))
 
-    def process_events(self, event):
-        """Process a game event using the scene"""
-        if event.type == pygame.QUIT:
-            sys.exit(0)
-
     @property
     def screen_width(self):
         """Get the screen's width"""
@@ -52,7 +48,7 @@ class TitleScene(Scene):
         self._buttons = [
             Button(self._screen, (int(self.screen_width * 0.875 - 50), self.screen_height * 0.33 + 75), "Play", 0, 100, 50, (0,0,255)),
             Button(self._screen, (int(self.screen_width * 0.875 - 50), self.screen_height * 0.50 + 75), "Play", 1, 100, 50, (0,0,255)),
-            Button(self._screen, (int(self.screen_width * 0.875 - 25), self.screen_height * 0.80 + 75), "Settings", 2, 150, 50, (0,255,255))]
+            Button(self._screen, (int(self.screen_width * 0.875 - 25), self.screen_height * 0.80 + 75), "Settings", 2, 150, 50, (0,0,255))]
     def start_scene(self):
         """Start the scene"""
         self._screen.fill(self._background_color)
@@ -100,13 +96,21 @@ class TitleScene(Scene):
         """Return True if the scene is running."""
         return self._scene_is_running
     
-    def process_events(self, event):
-        """Process game events using the scene"""
-        super().process_events(event)
-        for button in self._buttons:
-            button.process_events(event)
-            if button.clicked:
-                self._scene_is_running = False
+    def run(self):
+        """Process game events for the scene"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+            for button in self._buttons:
+                button.process_events(event)
+                if button.clicked:
+                    # stop the current scene
+                    self._scene_is_running = False
+                    # update the selection choice
+                    global SELECTION
+                    SELECTION = button.value
+            self.draw()
+            pygame.display.update()
 
 class VideoGameScene(Scene):
     """Class used to create an instance of Connect 4"""
@@ -116,6 +120,7 @@ class VideoGameScene(Scene):
         self._screen = screen
         self._background_color = backgound_color
         self._scene_is_running = True
+        self._board = Board(screen, 6, 7, SELECTION)
     
     def start_scene(self):
         """Start the scene"""
@@ -123,14 +128,14 @@ class VideoGameScene(Scene):
     
     def draw(self):
         super().draw()
+        # draw the game board and pieces
+        self._board.draw()
 
     @property
     def scene_is_running(self):
         """Return True if the scene is running."""
         return self._scene_is_running
     
-    def process_events(self, event):
-        """Process game events using the scene"""
-        super().process_events(event)
-
-    
+    def run(self):
+        """Runs an instance of Connect 4"""
+        self._board.run()

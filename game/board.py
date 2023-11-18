@@ -28,9 +28,13 @@ class Board:
                 ),
                 self._disk_diameter
             ) 
-            for j in range(self._cols)] for i in range(self._rows)]
-        self._col_pos = [disk.center[0] for disk in self._disks[0]] # column centers
-        self._col_rects = [pygame.Rect(x - self._disk_diameter, self._rect.top, self._disk_diameter, self.rect.height) for x in self._col_pos]
+            for j in range(self._cols)] for i in range(self._rows)
+        ]
+        self._col_pos = [disk.center[0] for disk in self._disks[0]] # column center points
+        self._col_rects = [
+            pygame.Rect(x - self._disk_radius, self._rect.top, self._disk_diameter, self.rect.height) 
+            for x in self._col_pos
+        ]
         self._players = [] # list of players
         self.initialize_players() # create the players
         self._preview_disk = Disk(self._screen, "red", (self._col_pos[0],150), self._disk_diameter) # disk on top of board 
@@ -86,7 +90,7 @@ class Board:
         
         # draw the preview disk on top
         self._preview_disk.draw()
-        
+
     def run(self):
         """Process the game's events"""
         # run until player quits
@@ -101,9 +105,10 @@ class Board:
             while not move_made:
                 current_player = self._players[player_index]
                 
-                # update the preview disk's color
+                # update the preview disk's color to current player's color
                 self._preview_disk.color = current_player.color
 
+                # handle events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         sys.exit(0)
@@ -111,15 +116,27 @@ class Board:
                     # check if player is human
                     if current_player.is_human:
                         # get the mouse's current position
-                        point = pygame.mouse.get_pos()
+                        point = pygame.mouse.get_pos()                                     
                         
-                        if event.type == pygame.MOUSEMOTION and self._rect.collidepoint(point):
-                            self._preview_disk.center = (point[0], 150)         
-                                    
-                        for rect in self._col_rects:
-                            point = rect.center
+                        # check if cursor is touching a column
+                        for col, rect in enumerate(self._col_rects):
+                            if event.type == pygame.MOUSEMOTION:
+                                # if cursor is on a column, change the preview
+                                #  disk's center to the column's center
+                                if rect.collidepoint(point[0], point[1]):
+                                    self._preview_disk.center = (rect.center[0], 150)
+                                    break
+
+                            # if clicking on a column, attempt to drop a disk
                             if rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
-                                move_made = True 
+                                # iterate through all of the disks in a column 
+                                for row in range(len(self._disks) - 1, -1, -1):
+                                    # if the disk is white (empty), then change the color
+                                    if self._disks[row][col].is_empty():
+                                        # change color to represent dropping a disk
+                                        self._disks[row][col].color = current_player.color
+                                        break
+                                        
                     else:
                         pass
                     self.draw()
@@ -128,7 +145,3 @@ class Board:
 
             # switch players in order
             player_index = (player_index + 1) % 2
-
-
-
-

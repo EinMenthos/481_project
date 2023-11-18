@@ -45,6 +45,13 @@ class Disk(pygame.sprite.Sprite):
     def color(self, color):
         """Update sprite to match the new color"""
         self._sprite = pygame.transform.scale(Disk._images[color], (self._width, self._width))
+        self._color = color
+
+    def is_empty(self):
+        """Returns True if the disk is empty (is white)"""
+        if self._color != 'white':
+            return False
+        return True
 
     def draw(self):
         """Draw the sprite"""

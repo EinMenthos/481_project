@@ -120,10 +120,11 @@ class VideoGameScene(Scene):
         self._screen = screen
         self._background_color = backgound_color
         self._scene_is_running = True
-        self._board = Board(screen, 6, 7, SELECTION)
+        self._board = None
     
     def start_scene(self):
         """Start the scene"""
+        self._board = Board(self._screen, 6, 7, SELECTION)
         self._screen.fill(self._background_color)
     
     def draw(self):

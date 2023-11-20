@@ -1,4 +1,4 @@
-import pygame, random, math, sys
+import pygame, random, sys, time
 from .disk import Disk
 from .player import Player
 
@@ -39,6 +39,8 @@ class Board:
         self.initialize_players() # create the players
         self._preview_disk = Disk(self._screen, "red", (self._col_pos[0],150), self._disk_diameter) # disk on top of board 
         self._continue_playing = True
+        self._player_index = 0 # tracks the current player
+        self._font = pygame.font.Font(None, 60) # font for Player's Turn Text
 
     @property
     def rect(self):
@@ -91,19 +93,24 @@ class Board:
         # draw the preview disk on top
         self._preview_disk.draw()
 
+        # create text to show current player
+        text = self._font.render(f"Player {self._player_index + 1}'s Turn", True, (255, 255, 255))
+        textpos = text.get_rect()
+        textpos.left = self._rect.left
+        textpos.centery = int(self.screen_height * 0.10)
+
+        # draw the text
+        self._screen.blit(text, textpos)
     def run(self):
         """Process the game's events"""
         # run until player quits
         while self._continue_playing:
-            # tracks the current player
-            player_index = 0
-
             # tracks if player made a move
             move_made = False
 
             # runs an instance (game) of Connect 4 based on a circular queue
             while not move_made:
-                current_player = self._players[player_index]
+                current_player = self._players[self._player_index]
                 
                 # update the preview disk's color to current player's color
                 self._preview_disk.color = current_player.color
@@ -135,13 +142,18 @@ class Board:
                                     if self._disks[row][col].is_empty():
                                         # change color to represent dropping a disk
                                         self._disks[row][col].color = current_player.color
+
+                                        # move was made, change flag to true to stop loop
+                                        move_made = True
+
                                         break
                                         
                     else:
                         pass
+
                     self.draw()
 
                     pygame.display.update()
 
             # switch players in order
-            player_index = (player_index + 1) % 2
+            self._player_index = (self._player_index + 1) % 2

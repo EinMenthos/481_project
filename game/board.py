@@ -4,12 +4,13 @@ from .player import Player
 
 class Board:
     """Creates an instance of Connect 4"""
-    def __init__(self, screen, rows, cols, game_type):
+    def __init__(self, screen, rows, cols, game_type, connect=4):
         """Initialize the game board."""
         self._screen = screen
         self._rows = rows
         self._cols = cols
-        self._game_type = game_type
+        self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
+        self._connect = connect # how many disks to connect in a row to win
         self._rect = pygame.Rect(int(self.screen_width * 0.125), int(self.screen_height * 0.25), int(self.screen_width * 0.75), int(self.screen_height * 0.75))
         self._disk_width = int((self._rect.width / cols) * 0.75) # width of 1 disk
         self._disk_height = int((self._rect.height / rows) * 0.75) # height of 1 disk
@@ -41,6 +42,7 @@ class Board:
         self._continue_playing = True
         self._player_index = 0 # tracks the current player
         self._font = pygame.font.Font(None, 60) # font for Player's Turn Text
+        self._new_game = True
 
     @property
     def rect(self):
@@ -101,6 +103,39 @@ class Board:
 
         # draw the text
         self._screen.blit(text, textpos)
+
+    def make_move(self, col, color):
+        """Player makes a move. Returns True if move made successfully."""
+        # iterate through all of the rows in a column 
+        for row in range(len(self._disks) - 1, -1, -1):
+            # if the row is white (empty), then change the color
+            if self._disks[row][col].is_empty():
+                # change color to represent dropping a disk
+                self._disks[row][col].color = color
+                return True
+            
+        # move cannot be made, return False
+        return False
+
+    def check_winner(self, player):
+        """Returns True if the current player is a winner"""
+        for row in range(self._rows):
+            for col in range(self._cols):
+                if self._disks[row][col].color == player:
+                    # Check horizontally
+                    if col + self._connect <= self._cols and all(self._disks[row][col+i].color == player for i in range(self._connect)):
+                        return True
+                    # Check vertically
+                    if row + self._connect <= self._rows and all(self._disks[row+i][col].color == player for i in range(self._connect)):
+                        return True
+                    # Check diagonally (positive slope)
+                    if col + self._connect <= self._cols and row + self._connect <= self._rows and all(self._disks[row+i][col+i].color == player for i in range(self._connect)):
+                        return True
+                    # Check diagonally (negative slope)
+                    if col - self._connect + 1 >= 0 and row + self._connect <= self._rows and all(self._disks[row+i][col-i].color == player for i in range(self._connect)):
+                        return True
+        return False
+    
     def run(self):
         """Process the game's events"""
         # run until player quits
@@ -136,18 +171,14 @@ class Board:
 
                             # if clicking on a column, attempt to drop a disk
                             if rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
-                                # iterate through all of the disks in a column 
-                                for row in range(len(self._disks) - 1, -1, -1):
-                                    # if the disk is white (empty), then change the color
-                                    if self._disks[row][col].is_empty():
-                                        # change color to represent dropping a disk
-                                        self._disks[row][col].color = current_player.color
+                                if self.make_move(col, current_player.color):
+                                    # move was made, change flag to true to stop current player's turn
+                                    move_made = True
 
-                                        # move was made, change flag to true to stop loop
-                                        move_made = True
-
-                                        break
-                                        
+                                    # check if player is a winner
+                                    if self.check_winner(current_player.color):
+                                        print("play again?")
+                                    break
                     else:
                         pass
 

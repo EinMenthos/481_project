@@ -19,18 +19,7 @@ class Board:
         self._gap_x = (self._rect.width - (self._disk_diameter * cols)) // (cols + 1) # set the gap between columns
         self._gap_y = (self._rect.height - (self._disk_diameter * rows)) // (rows + 1) # set the gap between rows
         # create the disks
-        self._disks = [
-            [Disk(
-                screen,
-                "white", 
-                (
-                    self._rect.left + ((j + 1) * self._gap_x) + (self._disk_diameter * j) + self._disk_radius,
-                    self._rect.top + ((i + 1) * self._gap_y) + (self._disk_diameter * i) + self._disk_radius
-                ),
-                self._disk_diameter
-            ) 
-            for j in range(self._cols)] for i in range(self._rows)
-        ]
+        self._disks = self.init_disks()
         self._col_pos = [disk.center[0] for disk in self._disks[0]] # column center points
         self._col_rects = [
             pygame.Rect(x - self._disk_radius, self._rect.top, self._disk_diameter, self.rect.height) 
@@ -42,7 +31,7 @@ class Board:
         self._continue_playing = True
         self._player_index = 0 # tracks the current player
         self._font = pygame.font.Font(None, 60) # font for Player's Turn Text
-        self._new_game = True
+        self._new_game = False
 
     @property
     def rect(self):
@@ -63,6 +52,21 @@ class Board:
     def disks(self):
         """Return list of disks"""
         return self._disks
+    
+    def init_disks(self):
+        """Initialize the disks for a new instance of Connect 4"""
+        return [
+            [Disk(
+                self._screen,
+                "white", 
+                (
+                    self._rect.left + ((j + 1) * self._gap_x) + (self._disk_diameter * j) + self._disk_radius,
+                    self._rect.top + ((i + 1) * self._gap_y) + (self._disk_diameter * i) + self._disk_radius
+                ),
+                self._disk_diameter
+            ) 
+            for j in range(self._cols)] for i in range(self._rows)
+        ]
 
     def initialize_players(self):
         """Creates the players for the game and selects order"""
@@ -140,6 +144,16 @@ class Board:
         """Process the game's events"""
         # run until player quits
         while self._continue_playing:
+            # if starting a 2nd game... 
+            if self._new_game:
+                # change the new game flag to False
+                self._new_game = False
+
+                # clear the disks
+                self._disks = self.init_disks()
+
+                # loser who lost the previous game starts first, change later
+
             # tracks if player made a move
             move_made = False
 
@@ -178,6 +192,7 @@ class Board:
                                     # check if player is a winner
                                     if self.check_winner(current_player.color):
                                         print("play again?")
+                                        self._new_game = True
                                     break
                     else:
                         pass

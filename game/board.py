@@ -140,6 +140,10 @@ class Board:
                         return True
         return False
     
+    def is_full(self):
+        """Returns true if board is full (no more available moves)"""
+        return all(cell.is_empty() != True for cell in self._disks[0])
+    
     def run(self):
         """Process the game's events"""
         # run until player quits
@@ -193,7 +197,12 @@ class Board:
                                     if self.check_winner(current_player.color):
                                         print("play again?")
                                         self._new_game = True
-                                    break
+                                        break
+
+                                    # check for draws (board is full)
+                                    if self.is_full():
+                                        print("Draw! Play again?")
+                                    
                     else:
                         pass
 

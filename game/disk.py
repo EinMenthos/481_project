@@ -26,6 +26,10 @@ class Disk(pygame.sprite.Sprite):
         return self._rect
     
     @property
+    def screen(self):
+        """Returns the disk's screen"""
+    
+    @property
     def center(self):
         """Returns the disk's center"""
         return self._center
@@ -34,6 +38,11 @@ class Disk(pygame.sprite.Sprite):
     def color(self):
         """Return the disk's color"""
         return self._color
+    
+    @property
+    def width(self):
+        """Return the disk's width"""
+        return self._width
     
     @center.setter
     def center(self, center):

@@ -1,4 +1,4 @@
-import pygame, random, sys, time
+import pygame, random, sys, time, copy
 from .disk import Disk
 from .player import Player
 
@@ -11,6 +11,8 @@ class Board:
         self._cols = cols
         self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
         self._connect = connect # how many disks to connect in a row to win
+        self._frame_rate = 30
+        self._clock = pygame.time.Clock()
         self._rect = pygame.Rect(int(self.screen_width * 0.125), int(self.screen_height * 0.25), int(self.screen_width * 0.75), int(self.screen_height * 0.75))
         self._disk_width = int((self._rect.width / cols) * 0.75) # width of 1 disk
         self._disk_height = int((self._rect.height / rows) * 0.75) # height of 1 disk
@@ -30,6 +32,7 @@ class Board:
         self._preview_disk = Disk(self._screen, "red", (self._col_pos[0],150), self._disk_diameter) # disk on top of board 
         self._continue_playing = True
         self._player_index = 0 # tracks the current player
+        self._opponent_index = 1 # tracks the opponent's index 
         self._font = pygame.font.Font(None, 60) # font for Player's Turn Text
         self._new_game = False
 
@@ -76,9 +79,9 @@ class Board:
 
         # create a list of 2 players
         if self._game_type == 0: # AI vs AI
-            self._players = [Player(colors[0], False), Player(colors[1], False)]
+            self._players = [Player(colors[0], False, 1), Player(colors[1], False)]
         else: # AI vs Human
-            self._players = [Player(colors[0], True), Player(colors[1], True)]
+            self._players = [Player(colors[0], False, 1), Player(colors[1], True)]
 
         # shuffle the list of players 
         random.shuffle(self._players)    
@@ -108,41 +111,218 @@ class Board:
         # draw the text
         self._screen.blit(text, textpos)
 
-    def make_move(self, col, color):
-        """Player makes a move. Returns True if move made successfully."""
+    def make_move(self, board, col, player):
+        """Player makes a move. Update the board."""
         # iterate through all of the rows in a column 
-        for row in range(len(self._disks) - 1, -1, -1):
+        for row in range(len(board) - 1, -1, -1):
             # if the row is white (empty), then change the color
-            if self._disks[row][col].is_empty():
+            if board[row][col].is_empty():
                 # change color to represent dropping a disk
-                self._disks[row][col].color = color
-                return True
-            
-        # move cannot be made, return False
-        return False
+                board[row][col].color = player.color
+                break
 
-    def check_winner(self, player):
+    def check_winner(self, board, player):
         """Returns True if the current player is a winner"""
         for row in range(self._rows):
             for col in range(self._cols):
-                if self._disks[row][col].color == player:
+                if board[row][col].color == player.color:
                     # Check horizontally
-                    if col + self._connect <= self._cols and all(self._disks[row][col+i].color == player for i in range(self._connect)):
+                    if col + self._connect <= self._cols and all(board[row][col+i].color == player.color for i in range(self._connect)):
                         return True
                     # Check vertically
-                    if row + self._connect <= self._rows and all(self._disks[row+i][col].color == player for i in range(self._connect)):
+                    if row + self._connect <= self._rows and all(board[row+i][col].color == player.color for i in range(self._connect)):
                         return True
                     # Check diagonally (positive slope)
-                    if col + self._connect <= self._cols and row + self._connect <= self._rows and all(self._disks[row+i][col+i].color == player for i in range(self._connect)):
+                    if col + self._connect <= self._cols and row + self._connect <= self._rows and all(board[row+i][col+i].color == player.color for i in range(self._connect)):
                         return True
                     # Check diagonally (negative slope)
-                    if col - self._connect + 1 >= 0 and row + self._connect <= self._rows and all(self._disks[row+i][col-i].color == player for i in range(self._connect)):
+                    if col - self._connect + 1 >= 0 and row + self._connect <= self._rows and all(board[row+i][col-i].color == player.color for i in range(self._connect)):
                         return True
         return False
     
-    def is_full(self):
+    def is_full(self, board):
         """Returns true if board is full (no more available moves)"""
-        return all(cell.is_empty() != True for cell in self._disks[0])
+        return all(cell.is_empty() != True for cell in board[0])
+    
+    def is_valid_move(self, board, col):
+        """Returns True if a valid move (player can drop a disk in that column)"""
+        return board[0][col].is_empty()
+    
+    def evaluate_window(self, window, player, EFmode):
+        score = 0
+
+        opponent = self._players[self._opponent_index] 
+
+        if window.count(player.color) == 4:
+            score += 100
+        elif window.count(player.color) == 3 and window.count("white") == 1:
+            score += 5
+        elif window.count(player) == 2 and window.count("white") == 2:
+            score += 2
+
+        if window.count(opponent.color) == 3 and window.count("white") == 1:
+            score -= 4
+
+        if EFmode == 1 or EFmode == -2:
+            #print("using strategy 1: trying to conquer the center")
+            # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
+            center_col = self._cols // 2
+            for i in range(4):
+                if window[i] == player.color:
+                    score += abs(center_col - (i + 1))  # Adjust the weight as needed
+        
+        if EFmode == 2 or EFmode == -1:
+            #print("using strategy 2: building a 7 trap.")
+            # 7-trap strategy - ATK
+            if window.count(player.color) == 1 and window.count("white") == 3:
+                # Check for a "7-trap" pattern: [X, ., ., O] or [O, ., ., X]
+                if window[0] == player.color and window[3] == player.color:
+                    score += 10
+        
+        if EFmode == 3 or EFmode == -2:
+            #print("using strategy 3: evaluating surrounding discs.")
+            # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
+            for i in range(4):
+                # Check left
+                if i > 0 and window[i - 1] == player.color:
+                    score += 1
+                # Check right
+                if i < 3 and window[i + 1] == player.color:
+                    score += 1
+                # Check up
+                if window[i] == player.color and i < 2 and window[i + 2] == player.color:
+                    score += 1
+                # Check down
+                if window[i] == player.color and i > 1 and window[i - 2] == player.color:
+                    score += 1
+                # Check both diagonals
+                if i % 2 == 0 and window[i] == player.color and window[(i + 2) % 4] == player.color:
+                    score += 1
+        if EFmode == 4 or EFmode == -2:
+            # Evaluate blocking opponent's trap - DEFENSIVE
+            for i in range(2):
+                if window[i] == opponent.color and window[i + 2] == opponent.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
+                    score -= 8
+
+        if EFmode == 5 or EFmode == -1:
+            #7 trap again
+            for i in range(2):
+                if window[i] == player.color and window[i + 2] == player.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
+                    score += 10
+
+        if EFmode == 6 or EFmode == -2:
+            # Check for horizontal fork
+            if window.count(player.color) == 2 and window.count("white") == 2:
+                if window.count(opponent.color) == 1:
+                    score += 10
+            
+            # Check for vertical fork
+            if window.count(player.color) == 1 and window.count("white") == 3:
+                if window.count(opponent.color) == 2:
+                    score += 10
+            
+            # Check for diagonal (positive slope) fork
+            if window.count(player.color) == 2 and window.count("white") == 2:
+                if window.count(opponent.color) == 1:
+                    score += 10
+            
+            # Check for diagonal (negative slope) fork
+            if window.count(player.color) == 1 and window.count("white") == 3:
+                if window.count(opponent.color) == 2:
+                    score += 10
+
+        return score
+
+    def evaluate_board(self, board, EFmode):
+    #if evalFuncMode == 0:
+        #print("using strategy 0: no traps")
+        score = 0
+
+        # Evaluate based on winning positions
+        if self.check_winner(board, self._players[self._player_index]):
+            score += 100
+        elif self.check_winner(board, self._players[self._opponent_index]):
+            score -= 100
+
+        # Evaluate based on the number of computer's pieces in rows, columns, and diagonals
+        for row in range(self._rows):
+            for col in range(self._cols - 3):
+                window = [board[row][col + i].color for i in range(4)]
+                score += self.evaluate_window(window, self._players[self._player_index], EFmode)
+
+        for col in range(self._cols):
+            for row in range(self._rows - 3):
+                window = [board[row + i][col].color for i in range(4)]
+                score += self.evaluate_window(window, self._players[self._player_index], EFmode)
+
+        for row in range(self._rows - 3):
+            for col in range(self._cols - 3):
+                window = [board[row + i][col + i].color for i in range(4)]
+                score += self.evaluate_window(window, self._players[self._player_index], EFmode)
+
+        for row in range(self._rows - 3):
+            for col in range(self._cols - 3):
+                window = [board[row + 3 - i][col + i].color for i in range(4)]
+                score += self.evaluate_window(window, self._players[self._player_index], EFmode)
+
+        return score
+    
+    def minimax(self, board, depth, is_maximizing, alpha, beta, EFmode):
+        if depth == 0 or self.check_winner(board, self._players[self._opponent_index]) or self.check_winner(board, self._players[self._player_index]) or self.is_full(board):
+            return self.evaluate_board(board, EFmode)
+
+        if is_maximizing:
+            max_eval = -float('inf')
+            for col in range(self._cols):
+                if self.is_valid_move(board, col):
+                    board_copy = board_copy = [
+                        [Disk(disk.screen, disk.color, disk.center, disk.width) for disk in row]  # Create a copy of each Disk object in the row
+                        for row in self._disks
+                    ]
+                    self.make_move(board_copy, col, self._players[self._player_index])
+                    eval = self.minimax(board_copy, depth - 1, False, alpha, beta, EFmode)
+                    max_eval = max(max_eval, eval)
+                    alpha = max(alpha, eval)
+                    if beta <= alpha:
+                        break
+            return max_eval
+        else:
+            min_eval = float('inf')
+            for col in range(self._cols):
+                if self.is_valid_move(board, col):
+                    board_copy = board_copy = [
+                        [Disk(disk.screen, disk.color, disk.center, disk.width) for disk in row]  # Create a copy of each Disk object in the row
+                        for row in self._disks
+                    ]                    
+                    self.make_move(board_copy, col, self._players[self._opponent_index])
+                    eval = self.minimax(board_copy, depth - 1, True, alpha, beta, EFmode)
+                    min_eval = min(min_eval, eval)
+                    beta = min(beta, eval)
+                    if beta <= alpha:
+                        break
+            return min_eval
+
+    def get_computer_move(self, player):
+        # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
+        columns = [col for col in range(self._cols) if self.is_valid_move(self._disks, col)]
+        random.shuffle(columns)
+        best_score = -float('inf')
+        best_move = None
+
+        for col in columns:
+            if self.is_valid_move(self._disks, col):
+                board_copy = [
+                    [Disk(disk.screen, disk.color, disk.center, disk.width) for disk in row]  # Create a copy of each Disk object in the row
+                    for row in self._disks
+                ]
+                self.make_move(board_copy, col, player)
+                d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
+                score = self.minimax(board_copy, d, False, -float('inf'), float('inf'), player.eval_func)  # Depth can be adjusted.
+
+                if score > best_score:
+                    best_score = score
+                    best_move = col
+        return best_move
     
     def run(self):
         """Process the game's events"""
@@ -167,12 +347,11 @@ class Board:
                 
                 # update the preview disk's color to current player's color
                 self._preview_disk.color = current_player.color
-
+                
                 # handle events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         sys.exit(0)
-                    
                     # check if player is human
                     if current_player.is_human:
                         # get the mouse's current position
@@ -189,26 +368,44 @@ class Board:
 
                             # if clicking on a column, attempt to drop a disk
                             if rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
-                                if self.make_move(col, current_player.color):
-                                    # move was made, change flag to true to stop current player's turn
-                                    move_made = True
+                                self.make_move(self._disks, col, current_player)
 
-                                    # check if player is a winner
-                                    if self.check_winner(current_player.color):
-                                        print("play again?")
-                                        self._new_game = True
-                                        break
-
-                                    # check for draws (board is full)
-                                    if self.is_full():
-                                        print("Draw! Play again?")
+                                # move was made, change flag to true to stop current player's turn
+                                move_made = True
                                     
-                    else:
-                        pass
+                if not current_player.is_human: # player computer (AI)
+                    print(f"{current_player.color} is going!")
+                    col = self.get_computer_move(current_player)  # this function will calculate the best move for AI
+                    self.make_move(self._disks, col, current_player)
 
-                    self.draw()
+                    # move was made, change flag to true to stop current player's turn
+                    move_made = True
 
-                    pygame.display.update()
+                self.draw()
 
+                pygame.display.update()
+            # self._clock.tick(self._frame_rate)
             # switch players in order
+
+            # check if current player is a winner
+            if self.check_winner(self._disks, self._players[self._player_index]):
+                print("play again?")
+                self._new_game = True
+                break
+            
+            # check if opponent is a winner
+            if self.check_winner(self._disks, self._players[self._opponent_index]):
+                print("somebody won!")
+                self._new_game = True
+                answer = False
+                while not answer:
+                    print("answer the question")
+                    # print('\n'.join([' '.join(map(lambda obj: str(obj.color), row)) for row in self._disks]))
+                break
+
+            # check for draws (board is full)
+            if self.is_full(self._disks):
+                print("Draw! Play again?")
+
+            self._opponent_index = self._player_index
             self._player_index = (self._player_index + 1) % 2

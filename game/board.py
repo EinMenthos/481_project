@@ -201,21 +201,21 @@ class Board:
                 # Check both diagonals
                 if i % 2 == 0 and window[i] == player.color and window[(i + 2) % 4] == player.color:
                     score += 1
-        if player.ef_mode and player.ef4_set:
+        if player.ef_mode and player.ev4_set:
             # print("using strategy 4: block opponent's trap.")
             # Evaluate blocking opponent's trap - DEFENSIVE
             for i in range(2):
                 if window[i] == opponent.color and window[i + 2] == opponent.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score -= 8
 
-        if player.ef_mode and player.ef5_set:
+        if player.ef_mode and player.ev5_set:
             # print("using strategy 5: 7 trap.")
             #7 trap again
             for i in range(2):
                 if window[i] == player.color and window[i + 2] == player.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score += 10
 
-        if player.ef_mode and player.ef6_set:
+        if player.ef_mode and player.ev6_set:
             # Check for horizontal fork
             # print("using strategy 6: horizontal fork.")
             if window.count(player.color) == 2 and window.count("white") == 2:

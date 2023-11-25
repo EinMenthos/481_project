@@ -19,7 +19,7 @@ class Player:
         self._ev3_set = ev3_set
         self._ev4_set = ev4_set
         self._ev5_set = ev5_set
-        self._ev5_set = ev6_set
+        self._ev6_set = ev6_set
 
 
     @property

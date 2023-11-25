@@ -11,7 +11,7 @@ class Board:
         self._cols = cols
         self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
         self._connect = connect # how many disks to connect in a row to win
-        self._frame_rate = 30
+        self._frame_rate = 5
         self._clock = pygame.time.Clock()
         self._rect = pygame.Rect(int(self.screen_width * 0.125), int(self.screen_height * 0.25), int(self.screen_width * 0.75), int(self.screen_height * 0.75))
         self._disk_width = int((self._rect.width / cols) * 0.75) # width of 1 disk
@@ -79,9 +79,9 @@ class Board:
 
         # create a list of 2 players
         if self._game_type == 0: # AI vs AI
-            self._players = [Player(colors[0], False, 1), Player(colors[1], False)]
+            self._players = [Player(colors[0], False, ef_mode=False), Player(colors[1], False, ef_mode=True, ev1_set=True, ev2_set=True)]
         else: # AI vs Human
-            self._players = [Player(colors[0], False, 1), Player(colors[1], True)]
+            self._players = [Player(colors[0], False, ef_mode=False), Player(colors[1], True)]
 
         # shuffle the list of players 
         random.shuffle(self._players)    
@@ -163,24 +163,27 @@ class Board:
         if window.count(opponent.color) == 3 and window.count("white") == 1:
             score -= 4
 
-        if EFmode == 1 or EFmode == -2:
-            #print("using strategy 1: trying to conquer the center")
+        #only AI2 will run customized EFs
+        if player.ef_mode and player.ev1_set:
+            # print("using strategy 1: trying to conquer the center")
             # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
             center_col = self._cols // 2
             for i in range(4):
                 if window[i] == player.color:
                     score += abs(center_col - (i + 1))  # Adjust the weight as needed
         
-        if EFmode == 2 or EFmode == -1:
-            #print("using strategy 2: building a 7 trap.")
+        if player.ef_mode and player.ev2_set:
+            # print("using strategy 2: building a 7 trap.")
             # 7-trap strategy - ATK
+            # Focuses on a particular 4-piece configuration with one player's piece at each end.
+            # It looks for a configuration where there is one piece of the current player (player), three empty spaces (EMPTY), and the player's pieces are at both ends of the configuration (window[0] and window[3]).
             if window.count(player.color) == 1 and window.count("white") == 3:
                 # Check for a "7-trap" pattern: [X, ., ., O] or [O, ., ., X]
                 if window[0] == player.color and window[3] == player.color:
                     score += 10
         
-        if EFmode == 3 or EFmode == -2:
-            #print("using strategy 3: evaluating surrounding discs.")
+        if player.ef_mode and player.ev3_set:
+            # print("using strategy 3: evaluating surrounding discs.")
             # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
             for i in range(4):
                 # Check left
@@ -198,20 +201,23 @@ class Board:
                 # Check both diagonals
                 if i % 2 == 0 and window[i] == player.color and window[(i + 2) % 4] == player.color:
                     score += 1
-        if EFmode == 4 or EFmode == -2:
+        if player.ef_mode and player.ef4_set:
+            # print("using strategy 4: block opponent's trap.")
             # Evaluate blocking opponent's trap - DEFENSIVE
             for i in range(2):
                 if window[i] == opponent.color and window[i + 2] == opponent.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score -= 8
 
-        if EFmode == 5 or EFmode == -1:
+        if player.ef_mode and player.ef5_set:
+            # print("using strategy 5: 7 trap.")
             #7 trap again
             for i in range(2):
                 if window[i] == player.color and window[i + 2] == player.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score += 10
 
-        if EFmode == 6 or EFmode == -2:
+        if player.ef_mode and player.ef6_set:
             # Check for horizontal fork
+            # print("using strategy 6: horizontal fork.")
             if window.count(player.color) == 2 and window.count("white") == 2:
                 if window.count(opponent.color) == 1:
                     score += 10
@@ -317,7 +323,7 @@ class Board:
                 ]
                 self.make_move(board_copy, col, player)
                 d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
-                score = self.minimax(board_copy, d, False, -float('inf'), float('inf'), player.eval_func)  # Depth can be adjusted.
+                score = self.minimax(board_copy, d, False, -float('inf'), float('inf'), player.ef_mode)  # Depth can be adjusted.
 
                 if score > best_score:
                     best_score = score
@@ -347,7 +353,7 @@ class Board:
                 
                 # update the preview disk's color to current player's color
                 self._preview_disk.color = current_player.color
-                
+
                 # handle events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -374,7 +380,6 @@ class Board:
                                 move_made = True
                                     
                 if not current_player.is_human: # player computer (AI)
-                    print(f"{current_player.color} is going!")
                     col = self.get_computer_move(current_player)  # this function will calculate the best move for AI
                     self.make_move(self._disks, col, current_player)
 
@@ -384,8 +389,7 @@ class Board:
                 self.draw()
 
                 pygame.display.update()
-            # self._clock.tick(self._frame_rate)
-            # switch players in order
+            self._clock.tick(self._frame_rate)
 
             # check if current player is a winner
             if self.check_winner(self._disks, self._players[self._player_index]):
@@ -400,12 +404,12 @@ class Board:
                 answer = False
                 while not answer:
                     print("answer the question")
-                    # print('\n'.join([' '.join(map(lambda obj: str(obj.color), row)) for row in self._disks]))
                 break
 
             # check for draws (board is full)
             if self.is_full(self._disks):
                 print("Draw! Play again?")
 
+            # switch players in order
             self._opponent_index = self._player_index
             self._player_index = (self._player_index + 1) % 2

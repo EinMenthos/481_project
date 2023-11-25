@@ -193,7 +193,7 @@ class SettingsScene(Scene):
         # Draw title
         title_rect = pygame.Rect(self.screen_width / 2 - 150, 50, 300, 100)
         font = pygame.font.Font(None, 100)
-        text = font.render("Settings", True, (255, 255, 255))
+        text = font.render("Settings AI2", True, (255, 255, 255))
         textpos = text.get_rect()
         textpos.centerx = title_rect.centerx
         textpos.centery = title_rect.centery

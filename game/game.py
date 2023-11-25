@@ -2,7 +2,8 @@ import pygame
 from pygame.locals import *
 from game.scene import (
     TitleScene,
-    VideoGameScene)
+    VideoGameScene,
+    SettingsScene)
 
 class Game:
     """Game class used to create an instance of Connect 4."""
@@ -19,8 +20,11 @@ class Game:
 
     def create_scenes(self):
         """Create the scenes the game will use."""
-        self._scenes = [TitleScene(self._screen, (30, 178, 247)),
-            VideoGameScene(self._screen, (138,206,247))]
+        self._scenes = [
+            TitleScene(self._screen, (30, 178, 247)),
+            VideoGameScene(self._screen, (138,206,247)),
+            SettingsScene(self._screen, (30, 178, 247))  # Add this line
+            ]
     
     def run(self):
         """Start and run each scene."""

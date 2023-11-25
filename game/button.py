@@ -40,6 +40,10 @@ class Button:
         """Returns true if button has been clicked"""
         return self._clicked
     
+    def toggle(self):
+        """Toggle the button on or off"""
+        self._clicked = not self._clicked
+    
     def draw(self):
         """Draw the button"""
         pygame.draw.rect(self._screen, self._color, self._rect, border_radius=self._border_radius)

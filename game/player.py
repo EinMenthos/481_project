@@ -9,7 +9,9 @@ class Player:
         ev3_set=False,
         ev4_set=False,
         ev5_set=False,
-        ev6_set=False):
+        ev6_set=False,
+        name=''):
+
         """Initialize the Player"""
         self._color = color
         self._is_human = is_human
@@ -20,6 +22,7 @@ class Player:
         self._ev4_set = ev4_set
         self._ev5_set = ev5_set
         self._ev6_set = ev6_set
+        self._name = name
 
 
     @property
@@ -67,3 +70,7 @@ class Player:
         """Returns True if player is using Evaluation Function 6"""
         return self._ev6_set
     
+    @property
+    def name(self):
+        """Returns the player's name"""
+        return self._name

@@ -87,7 +87,7 @@ class Board:
 
         # create a list of 2 players
         if self._game_type == 0: # AI vs AI
-            self._players = [Player(colors[0], False, ef_mode=False), 
+            self._players = [Player(colors[0], False, ef_mode=False, name="Default AI"), 
                 Player(
                     colors[1], 
                     False, ef_mode=True, 
@@ -97,10 +97,11 @@ class Board:
                     ev4_set=self._efs[3]["selected"],
                     ev5_set=self._efs[4]["selected"],
                     ev6_set=self._efs[5]["selected"],
+                    name="Custom AI"
                 )]
             
         else: # AI vs Human
-            self._players = [Player(colors[0], False, ef_mode=False), Player(colors[1], True)]
+            self._players = [Player(colors[0], False, ef_mode=False, name="AI"), Player(colors[1], True, name="Human")]
 
         # shuffle the list of players 
         random.shuffle(self._players)    
@@ -122,7 +123,7 @@ class Board:
         self._preview_disk.draw()
 
         # create text to show current player
-        text = self._font.render(f"Player {self._player_index + 1}'s Turn", True, (255, 255, 255))
+        text = self._font.render(f"{self._players[self._player_index].name}'s Turn", True, (255, 255, 255))
         textpos = text.get_rect()
         textpos.left = self._rect.left
         textpos.centery = int(self.screen_height * 0.10)
@@ -410,7 +411,7 @@ class Board:
                     move_made = True
 
                 if self._game_type == 0:
-                    time.sleep(0.5)
+                    time.sleep(0.25)
 
                 self.draw()
                 self._clock.tick(self._frame_rate)
@@ -419,12 +420,12 @@ class Board:
             # check if current player is a winner
             if self.check_winner(self._disks, self._players[self._player_index]):
                 self._game_over = True
-                self._game_over_popup.update_message(f"Player {self._player_index + 1} wins!")
+                self._game_over_popup.update_message(f"{self._players[self._player_index].name} wins!")
 
             # check if opponent is a winner
             if self.check_winner(self._disks, self._players[self._opponent_index]):
                 self._game_over = True
-                self._game_over_popup.update_message(f"Player {self._opponent_index + 1} wins!")
+                self._game_over_popup.update_message(f"{self._players[self._opponent_index].name} wins!")
 
             # check for draws (board is full)
             if self.is_full(self._disks):

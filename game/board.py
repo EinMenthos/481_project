@@ -383,7 +383,7 @@ class Board:
                     if event.type == pygame.QUIT:
                         sys.exit(0)
                     # check if player is human
-                    if current_player.is_human:
+                    if current_player.is_human and not move_made:
                         # get the mouse's current position
                         point = pygame.mouse.get_pos()                                     
                         
@@ -398,10 +398,11 @@ class Board:
 
                             # if clicking on a column, attempt to drop a disk
                             if rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
-                                self.make_move(self._disks, col, current_player)
+                                if self.is_valid_move(self._disks, col):
+                                    self.make_move(self._disks, col, current_player)
 
-                                # move was made, change flag to true to stop current player's turn
-                                move_made = True
+                                    # move was made, change flag to true to stop current player's turn
+                                    move_made = True
                                     
                 if not current_player.is_human: # player computer (AI)
                     col = self.get_computer_move(current_player)  # this function will calculate the best move for AI

@@ -43,16 +43,6 @@ class Player:
         return self._ev1_set
     
     @property
-    def ev1_set(self):
-        """Returns True if player is using Evaluation Function 1"""
-        return self._ev1_set
-    
-    @property
-    def ev1_set(self):
-        """Returns True if player is using Evaluation Function 1"""
-        return self._ev1_set
-    
-    @property
     def ev2_set(self):
         """Returns True if player is using Evaluation Function 2"""
         return self._ev2_set

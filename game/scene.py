@@ -12,11 +12,16 @@ FRAME_RATE = 30
 # tracks selection
 SELECTION = None
 
+TITLE_SCENE_INDEX = 0
+SETTINGS_SCENE_INDEX = 1
+VIDEOGAME_SCENE_INDEX = 2
+
 class SceneManager:
     """Class to manage scenes in the game"""
     def __init__(self):
         self._scenes = []
-        self._current_index = 0
+        self._current_index = TITLE_SCENE_INDEX
+        self._efs = []
     
     def add_scene(self, scene):
         """Adds a scene to be managed"""
@@ -24,6 +29,10 @@ class SceneManager:
 
     def switch_scene(self, index):
         """Stops the current scene and starts runs a new scene"""
+        # if the current scene is SettingsScene
+        if self._current_index == SETTINGS_SCENE_INDEX:
+            self._efs = self._scenes[self._current_index].items
+
         if 0 <= index < len(self._scenes):
             # stop the current scene
             self._scenes[self._current_index].scene_is_running = False
@@ -33,6 +42,10 @@ class SceneManager:
             self._current_index = index
             # start the new scene
             self._scenes[index].scene_is_running = True
+
+            # if the new scene is VideoGameScene, set the evaluation functions
+            if index == VIDEOGAME_SCENE_INDEX:
+                self._scenes[index].set_efs(self._efs)
 
     @property
     def current_scene(self):
@@ -176,9 +189,9 @@ class TitleScene(Scene):
 
                     # set the new scene index
                     if SELECTION == 0 or SELECTION == 1:
-                        self._next_scene_index = 2 # VideoGameScene is the 3rd scene
+                        self._next_scene_index = VIDEOGAME_SCENE_INDEX # VideoGameScene is the next scene
                     elif SELECTION == 2:
-                        self._next_scene_index = 1 # SettingsScene is the 2nd scene
+                        self._next_scene_index = SETTINGS_SCENE_INDEX # SettingsScene is the next scene
             self.draw()
             pygame.display.update()
 
@@ -193,10 +206,15 @@ class VideoGameScene(Scene):
         self._board = None
         self._requests_scene_switch = False # tracks if new scene is going to run
         self._next_scene_index = None   # tracks the index of new scene
+        self._efs = []
+
+    def set_efs(self, efs):
+        """Sets the evaluation functions to be used"""
+        self._efs = efs
 
     def start_scene(self):
         """Start the scene"""
-        self._board = Board(self._screen, 6, 7, SELECTION)
+        self._board = Board(self._screen, 6, 7, SELECTION, self._efs)
         self._screen.fill(self._background_color)
     
     def draw(self):
@@ -229,6 +247,11 @@ class SettingsScene(Scene):
         ]
         self._requests_scene_switch = False # tracks if new scene is going to run
         self._next_scene_index = None   # tracks the index of new scene
+
+    @property
+    def items(self):
+        """Return the selected evaluation functions"""
+        return self._items
 
     def start_scene(self):
         """Start the scene"""
@@ -281,8 +304,7 @@ class SettingsScene(Scene):
     def toggle_item(self, index):
         """Toggle the selected state of an item."""
         self._items[index]["selected"] = not self._items[index]["selected"]
-        print(self._items)
-        
+
     def run(self):
         """Process game events for the scene"""
         while self._scene_is_running:
@@ -314,8 +336,8 @@ class SettingsScene(Scene):
                         # request and update new scene index
                         self._scene_is_running = False
                         self._requests_scene_switch = True
-                        self._next_scene_index = 0 # TitleScene is the 1st scene
-                            
+                        self._next_scene_index = TITLE_SCENE_INDEX # next scene is TitleScene
+
             # Clear the screen
             self._screen.fill(self._background_color)
 

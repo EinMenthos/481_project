@@ -6,12 +6,13 @@ from .button import Button
 
 class Board:
     """Creates an instance of Connect 4"""
-    def __init__(self, screen, rows, cols, game_type, connect=4):
+    def __init__(self, screen, rows, cols, game_type, efs, connect=4):
         """Initialize the game board."""
         self._screen = screen
         self._rows = rows
         self._cols = cols
         self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
+        self._efs = efs
         self._connect = connect # how many disks to connect in a row to win
         self._frame_rate = 10
         self._clock = pygame.time.Clock()
@@ -30,7 +31,6 @@ class Board:
             for x in self._col_pos
         ]
         self._players = [] # list of players
-        self.initialize_players() # create the players
         self._preview_disk = Disk(self._screen, "red", (self._col_pos[0],150), self._disk_diameter) # disk on top of board 
         self._continue_playing = True
         self._player_index = 0 # tracks the current player
@@ -87,7 +87,18 @@ class Board:
 
         # create a list of 2 players
         if self._game_type == 0: # AI vs AI
-            self._players = [Player(colors[0], False, ef_mode=False), Player(colors[1], False, ef_mode=True, ev1_set=True, ev2_set=True)]
+            self._players = [Player(colors[0], False, ef_mode=False), 
+                Player(
+                    colors[1], 
+                    False, ef_mode=True, 
+                    ev1_set=self._efs[0]["selected"], 
+                    ev2_set=self._efs[1]["selected"],
+                    ev3_set=self._efs[2]["selected"],
+                    ev4_set=self._efs[3]["selected"],
+                    ev5_set=self._efs[4]["selected"],
+                    ev6_set=self._efs[5]["selected"],
+                )]
+            
         else: # AI vs Human
             self._players = [Player(colors[0], False, ef_mode=False), Player(colors[1], True)]
 
@@ -161,6 +172,7 @@ class Board:
         return board[0][col].is_empty()
     
     def evaluate_window(self, window, player, EFmode):
+        print(f"{self._player_index}: efmode={EFmode}, ef1={player.ev1_set}, ef2={player.ev2_set}, ef3={player.ev3_set}, ef4={player.ev4_set}, ef5={player.ev5_set}, ef6={player.ev6_set}")
         score = 0
 
         opponent = self._players[self._opponent_index] 
@@ -342,6 +354,8 @@ class Board:
     
     def run(self):
         """Process the game's events"""
+        self.initialize_players()
+
         # run until player quits
         while self._continue_playing:
             # if starting a 2nd game... 

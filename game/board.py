@@ -14,7 +14,7 @@ class Board:
         self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
         self._efs = efs
         self._connect = connect # how many disks to connect in a row to win
-        self._frame_rate = 10
+        self._frame_rate = 20
         self._clock = pygame.time.Clock()
         self._rect = pygame.Rect(int(self.screen_width * 0.125), int(self.screen_height * 0.25), int(self.screen_width * 0.75), int(self.screen_height * 0.75))
         self._disk_width = int((self._rect.width / cols) * 0.75) # width of 1 disk
@@ -410,11 +410,11 @@ class Board:
                     # move was made, change flag to true to stop current player's turn
                     move_made = True
 
-                if self._game_type == 0:
-                    time.sleep(0.25)
-
                 self.draw()
+                if self._game_type == 0:
+                    time.sleep(0.1)
                 self._clock.tick(self._frame_rate)
+                
                 pygame.display.update()
 
             # check if current player is a winner

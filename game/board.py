@@ -1,6 +1,8 @@
 import pygame, random, sys, time, copy
 from .disk import Disk
 from .player import Player
+from .popup import Popup
+from .button import Button
 
 class Board:
     """Creates an instance of Connect 4"""
@@ -11,7 +13,7 @@ class Board:
         self._cols = cols
         self._game_type = game_type # 0 = AI vs AI, 1 = AI vs Player
         self._connect = connect # how many disks to connect in a row to win
-        self._frame_rate = 5
+        self._frame_rate = 10
         self._clock = pygame.time.Clock()
         self._rect = pygame.Rect(int(self.screen_width * 0.125), int(self.screen_height * 0.25), int(self.screen_width * 0.75), int(self.screen_height * 0.75))
         self._disk_width = int((self._rect.width / cols) * 0.75) # width of 1 disk
@@ -35,6 +37,12 @@ class Board:
         self._opponent_index = 1 # tracks the opponent's index 
         self._font = pygame.font.Font(None, 60) # font for Player's Turn Text
         self._new_game = False
+        self._game_over = False
+        self._game_over_popup = Popup(screen, (self._rect.left, self._rect.top), [
+            Button(screen, (325, 600), "Quit", False, 150, 50, (0,0,255)),
+            Button(screen, (600, 600), "Play Again", True, 150, 50, (0,0,255))
+        ],
+        (self._rect.width, self._rect.height))
 
     @property
     def rect(self):
@@ -111,6 +119,10 @@ class Board:
         # draw the text
         self._screen.blit(text, textpos)
 
+        # if the game is over, draw the popup
+        if self._game_over:
+            self._game_over_popup.draw()
+
     def make_move(self, board, col, player):
         """Player makes a move. Update the board."""
         # iterate through all of the rows in a column 
@@ -164,7 +176,7 @@ class Board:
             score -= 4
 
         #only AI2 will run customized EFs
-        if player.ef_mode and player.ev1_set:
+        if EFmode and player.ev1_set:
             # print("using strategy 1: trying to conquer the center")
             # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
             center_col = self._cols // 2
@@ -172,7 +184,7 @@ class Board:
                 if window[i] == player.color:
                     score += abs(center_col - (i + 1))  # Adjust the weight as needed
         
-        if player.ef_mode and player.ev2_set:
+        if EFmode and player.ev2_set:
             # print("using strategy 2: building a 7 trap.")
             # 7-trap strategy - ATK
             # Focuses on a particular 4-piece configuration with one player's piece at each end.
@@ -182,7 +194,7 @@ class Board:
                 if window[0] == player.color and window[3] == player.color:
                     score += 10
         
-        if player.ef_mode and player.ev3_set:
+        if EFmode and player.ev3_set:
             # print("using strategy 3: evaluating surrounding discs.")
             # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
             for i in range(4):
@@ -201,21 +213,21 @@ class Board:
                 # Check both diagonals
                 if i % 2 == 0 and window[i] == player.color and window[(i + 2) % 4] == player.color:
                     score += 1
-        if player.ef_mode and player.ev4_set:
+        if EFmode and player.ev4_set:
             # print("using strategy 4: block opponent's trap.")
             # Evaluate blocking opponent's trap - DEFENSIVE
             for i in range(2):
                 if window[i] == opponent.color and window[i + 2] == opponent.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score -= 8
 
-        if player.ef_mode and player.ev5_set:
+        if EFmode and player.ev5_set:
             # print("using strategy 5: 7 trap.")
             #7 trap again
             for i in range(2):
                 if window[i] == player.color and window[i + 2] == player.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
                     score += 10
 
-        if player.ef_mode and player.ev6_set:
+        if EFmode and player.ev6_set:
             # Check for horizontal fork
             # print("using strategy 6: horizontal fork.")
             if window.count(player.color) == 2 and window.count("white") == 2:
@@ -240,8 +252,6 @@ class Board:
         return score
 
     def evaluate_board(self, board, EFmode):
-    #if evalFuncMode == 0:
-        #print("using strategy 0: no traps")
         score = 0
 
         # Evaluate based on winning positions
@@ -309,7 +319,7 @@ class Board:
             return min_eval
 
     def get_computer_move(self, player):
-        # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
+        """Use the minimax algorithm with Alpha-Beta pruning to make the computer's move"""
         columns = [col for col in range(self._cols) if self.is_valid_move(self._disks, col)]
         random.shuffle(columns)
         best_score = -float('inf')
@@ -348,7 +358,7 @@ class Board:
             move_made = False
 
             # runs an instance (game) of Connect 4 based on a circular queue
-            while not move_made:
+            while not move_made and not self._game_over:
                 current_player = self._players[self._player_index]
                 
                 # update the preview disk's color to current player's color
@@ -386,29 +396,47 @@ class Board:
                     # move was made, change flag to true to stop current player's turn
                     move_made = True
 
-                self.draw()
+                if self._game_type == 0:
+                    time.sleep(0.5)
 
+                self.draw()
+                self._clock.tick(self._frame_rate)
                 pygame.display.update()
-            self._clock.tick(self._frame_rate)
 
             # check if current player is a winner
             if self.check_winner(self._disks, self._players[self._player_index]):
-                print("play again?")
-                self._new_game = True
-                break
-            
+                self._game_over = True
+                self._game_over_popup.update_message(f"Player {self._player_index + 1} wins!")
+
             # check if opponent is a winner
             if self.check_winner(self._disks, self._players[self._opponent_index]):
-                print("somebody won!")
-                self._new_game = True
-                answer = False
-                while not answer:
-                    print("answer the question")
-                break
+                self._game_over = True
+                self._game_over_popup.update_message(f"Player {self._opponent_index + 1} wins!")
 
             # check for draws (board is full)
             if self.is_full(self._disks):
-                print("Draw! Play again?")
+                self._game_over = True
+            
+            while self._game_over:
+                # draw the popup
+                self.draw()
+                pygame.display.update()
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit(0)
+
+                    self._game_over_popup.process_events(event)
+                    
+                    # exit if "Exit Game" button is pressed
+                    if self._game_over_popup.buttons[0].clicked:
+                        sys.exit(0)
+
+                    # Restart the game if "Play Again" button is pressed
+                    if self._game_over_popup.buttons[1].clicked:
+                        self._game_over_popup.buttons[1].toggle()
+                        self._new_game = True
+                        self._game_over = False
 
             # switch players in order
             self._opponent_index = self._player_index

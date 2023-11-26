@@ -64,3 +64,4 @@ class Button:
         if self.rect.collidepoint(point) and event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed():
                 self._clicked = True
+                self._color = self._original_color

@@ -225,7 +225,7 @@ class SettingsScene(Scene):
             {"name": "EV6: Horizontal trap", "selected": False}
         ]
         self._buttons = [
-            Button(self._screen, (int(self.screen_width * 0.5 - 50), 100), "Back", 0, 100, 50, (0, 0, 255))
+            Button(self._screen, (150, int(self.screen_width * 0.125)), "Back", 0, 100, 50, (0, 0, 255))
         ]
         self._requests_scene_switch = False # tracks if new scene is going to run
         self._next_scene_index = None   # tracks the index of new scene
@@ -255,7 +255,7 @@ class SettingsScene(Scene):
 
         for item in self._items:
             # Draw checkbox
-            checkbox_rect = pygame.Rect(self.screen_width / 2 - 100, item_height - 25, checkbox_width, checkbox_width)
+            checkbox_rect = pygame.Rect(self.screen_width / 2 - 200, item_height - 25, checkbox_width, checkbox_width)
             pygame.draw.rect(self._screen, (255, 255, 255), checkbox_rect, 2)
             if item["selected"]:
                 pygame.draw.line(self._screen, (255, 255, 255), (checkbox_rect.left + 5, checkbox_rect.centery),
@@ -281,8 +281,8 @@ class SettingsScene(Scene):
     def toggle_item(self, index):
         """Toggle the selected state of an item."""
         self._items[index]["selected"] = not self._items[index]["selected"]
-        #self.draw()  # Redraw the screen to update the checkbox visually
-
+        print(self._items)
+        
     def run(self):
         """Process game events for the scene"""
         while self._scene_is_running:
@@ -295,7 +295,7 @@ class SettingsScene(Scene):
                 # Handle checkbox clicks
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     for i, item in enumerate(self._items):
-                        checkbox_rect = pygame.Rect(self.screen_width / 2 - 100, 200 + 50 * i - 25, 20, 20)
+                        checkbox_rect = pygame.Rect(self.screen_width / 2 - 200, 200 + 50 * i - 25, 20, 20)
                         if checkbox_rect.collidepoint(event.pos):
                             self.toggle_item(i)
                             print(f"{item['name']} {'selected' if item['selected'] else 'deselected'}")
@@ -309,13 +309,12 @@ class SettingsScene(Scene):
                 # Process the button click only once when the mouse button is released
                 for button in self._buttons:
                     if button.clicked:
-                        if button.value == 0:  # Check if the "Back" button is clicked
-                            # stop the current scene
-                            button.toggle()
-                            # request and update new scene index
-                            self._scene_is_running = False
-                            self._requests_scene_switch = True
-                            self._next_scene_index = 0 # TitleScene is the 1st scene
+                        # stop the current scene
+                        button.toggle()
+                        # request and update new scene index
+                        self._scene_is_running = False
+                        self._requests_scene_switch = True
+                        self._next_scene_index = 0 # TitleScene is the 1st scene
                             
             # Clear the screen
             self._screen.fill(self._background_color)

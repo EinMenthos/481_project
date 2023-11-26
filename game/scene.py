@@ -44,7 +44,7 @@ class SceneManager:
             self._scenes[index].scene_is_running = True
 
             # if the new scene is VideoGameScene, set the evaluation functions
-            if index == VIDEOGAME_SCENE_INDEX:
+            if index == VIDEOGAME_SCENE_INDEX and len(self._efs) > 0:
                 self._scenes[index].set_efs(self._efs)
 
     @property
@@ -206,7 +206,14 @@ class VideoGameScene(Scene):
         self._board = None
         self._requests_scene_switch = False # tracks if new scene is going to run
         self._next_scene_index = None   # tracks the index of new scene
-        self._efs = []
+        self._efs = [
+            {"name": "EV1: conquer the center", "selected": False},
+            {"name": "EV2: 7 trap", "selected": False},
+            {"name": "EV3: Surrounding discs", "selected": False},
+            {"name": "EV4: Block 7 traps", "selected": False},
+            {"name": "EV5: 7 trap2", "selected": False},
+            {"name": "EV6: Horizontal trap", "selected": False}
+        ]
 
     def set_efs(self, efs):
         """Sets the evaluation functions to be used"""

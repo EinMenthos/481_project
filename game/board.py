@@ -172,7 +172,6 @@ class Board:
         return board[0][col].is_empty()
     
     def evaluate_window(self, window, player, EFmode):
-        print(f"{self._player_index}: efmode={EFmode}, ef1={player.ev1_set}, ef2={player.ev2_set}, ef3={player.ev3_set}, ef4={player.ev4_set}, ef5={player.ev5_set}, ef6={player.ev6_set}")
         score = 0
 
         opponent = self._players[self._opponent_index] 

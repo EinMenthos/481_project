@@ -431,7 +431,8 @@ class Board:
             # check for draws (board is full)
             if self.is_full(self._disks):
                 self._game_over = True
-            
+                self._game_over_popup.update_message("Draw!")
+
             while self._game_over:
                 # draw the popup
                 self.draw()

@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import argparse
+
 
 # Constants for the game
 EMPTY = 0
@@ -12,10 +14,19 @@ CONNECT = 4     #this value could be customized
 # Initialize the game board
 board = np.zeros((ROWS, COLS), dtype=int)
 
-# Initialize win counters
-player_wins = 0
-computer_wins = 0
-draws = 0
+
+# Function to parse command-line arguments
+def parse_args():
+    parser = argparse.ArgumentParser(description="Connect Four Game with Customizable Evaluation Functions")
+    parser.add_argument("--ev1", action="store_true", help="Enable Evaluation Function 1")
+    parser.add_argument("--ev2", action="store_true", help="Enable Evaluation Function 2")
+    parser.add_argument("--ev3", action="store_true", help="Enable Evaluation Function 3")
+    parser.add_argument("--ev4", action="store_true", help="Enable Evaluation Function 4")
+    parser.add_argument("--ev5", action="store_true", help="Enable Evaluation Function 5")
+    parser.add_argument("--ev6", action="store_true", help="Enable Evaluation Function 6")
+    parser.add_argument("--mode", type=int, choices=[0, 1], default=0, help="Game mode (0: AI vs AI, 1: Player vs AI)")
+    
+    return parser.parse_args()
 
 # Function to load win counts from a file
 def load_win_counts():
@@ -25,6 +36,12 @@ def load_win_counts():
             return int(data[0]), int(data[1]), int(data[2])
     except FileNotFoundError:
         return 0, 0, 0
+    
+# Initialize win counters
+# player_wins = 0
+# computer_wins = 0
+# draws = 0
+player_wins, computer_wins, draws = load_win_counts()
 
 # Function to save win counts to a file
 def save_win_counts(player_wins, computer_wins, draws):
@@ -78,22 +95,7 @@ def get_player_move():
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
     if gameMode == 0:
         #print("AI vs AI mode")
-        #columns = list(range(COLS))
-        columns = [col for col in range(COLS) if is_valid_move(board, col)]
-        random.shuffle(columns)
-        best_score = -float('inf')
-        best_move = None
-        #for col in range(COLS):
-        for col in columns:
-            if is_valid_move(board, col):
-                board_copy = board.copy()
-                make_move(board_copy, col, COMPUTER)
-                d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
-                score = minimax(board_copy, d, False, -float('inf'), float('inf'), False)  # Depth can be adjusted.
-                if score > best_score:
-                    best_score = score
-                    best_move = col
-        return best_move
+        return get_computer_move(board)
     else:
         #print("Player vs AI mode")
         while True:
@@ -256,6 +258,7 @@ def evaluate_window(window, player, EFmode):
 
     if EFmode and EV5set:
         # Check for forks
+        # print("using strategy 5: fork10.")
         empty_count = window.count(EMPTY)
         player_count = window.count(player)
         opponent_count = window.count(opponent)
@@ -278,6 +281,8 @@ def evaluate_window(window, player, EFmode):
 
     if EFmode and EV6set:
         # Check for forks
+        # print("using strategy 6: fork25.")
+
         empty_count = window.count(EMPTY)
         player_count = window.count(player)
         opponent_count = window.count(opponent)
@@ -315,16 +320,27 @@ def main():
     global EV4set
     global EV5set
     global EV6set
-    EV1set = False
-    EV2set = False
-    EV3set = False
-    EV4set = False
-    EV5set = False
-    EV6set = True
+    global gameMode
+    #EV1set = False
+    #EV2set = False
+    #EV3set = False
+    #EV4set = False
+    #EV5set = False
+    #EV6set = True   
 
     #game mode 0 = AI vs AI, mode 1 = player vs AI
-    global gameMode
-    gameMode = 0
+    # gameMode = 0
+
+    # Parse command-line arguments
+    args = parse_args()
+    EV1set = args.ev1
+    EV2set = args.ev2
+    EV3set = args.ev3
+    EV4set = args.ev4
+    EV5set = args.ev5
+    EV6set = args.ev6
+    gameMode = args.mode
+
     while True:
         if gameMode == 1:
             print_board(board)

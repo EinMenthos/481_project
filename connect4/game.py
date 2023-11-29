@@ -95,7 +95,7 @@ def get_player_move():
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
     if gameMode == 0:
         #print("AI vs AI mode")
-        return get_computer_move(board)
+        return get_computer_move(board, False)
     else:
         #print("Player vs AI mode")
         while True:
@@ -110,7 +110,7 @@ def get_player_move():
 
 
 
-def get_computer_move(board):
+def get_computer_move(board, EVon):
     # Use the minimax algorithm with Alpha-Beta pruning to make the computer's move.
     #columns = list(range(COLS))
     columns = [col for col in range(COLS) if is_valid_move(board, col)]
@@ -123,7 +123,7 @@ def get_computer_move(board):
             board_copy = board.copy()
             make_move(board_copy, col, COMPUTER)
             d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
-            score = minimax(board_copy, d, False, -float('inf'), float('inf'), True)  # Depth can be adjusted.
+            score = minimax(board_copy, d, False, -float('inf'), float('inf'), EVon)  # Depth can be adjusted.
 
             if score > best_score:
                 best_score = score
@@ -265,19 +265,19 @@ def evaluate_window(window, player, EFmode):
 
         # Check for horizontal fork
         if empty_count == 2 and player_count == 2 and opponent_count == 1:
-            score += 10
+            score += 5
 
         # Check for vertical fork
         if empty_count == 3 and player_count == 1 and opponent_count == 2:
-            score += 10
+            score += 5
 
         # Check for diagonal (positive slope) fork
         if empty_count == 2 and player_count == 2 and opponent_count == 1:
-            score += 10
+            score += 5
 
         # Check for diagonal (negative slope) fork
         if empty_count == 3 and player_count == 1 and opponent_count == 2:
-            score += 10
+            score += 5
 
     if EFmode and EV6set:
         # Check for forks
@@ -289,19 +289,19 @@ def evaluate_window(window, player, EFmode):
 
         # Check for horizontal fork
         if empty_count == 2 and player_count == 2 and opponent_count == 1:
-            score += 25
+            score += 10
 
         # Check for vertical fork
         if empty_count == 3 and player_count == 1 and opponent_count == 2:
-            score += 25
+            score += 5
 
         # Check for diagonal (positive slope) fork
         if empty_count == 2 and player_count == 2 and opponent_count == 1:
-            score += 25
+            score += 10
 
         # Check for diagonal (negative slope) fork
         if empty_count == 3 and player_count == 1 and opponent_count == 2:
-            score += 25
+            score += 5
     return score
 
 def main():
@@ -341,6 +341,8 @@ def main():
     EV6set = args.ev6
     gameMode = args.mode
 
+    # print("config: ", EV1set, EV2set, EV3set, EV4set, EV5set, EV6set, gameMode)
+
     while True:
         if gameMode == 1:
             print_board(board)
@@ -361,7 +363,7 @@ def main():
                 #print('score: Player: ' + str(player_wins) + '\tAI: ' + str(computer_wins) + '\tDraws: ' + str(draws))
                 break
         else:
-            col = get_computer_move(board)  #this function will calculate the best move for p2
+            col = get_computer_move(board, True)  #this function will calculate the best move for p2
             make_move(board, col, COMPUTER)
             if gameMode == 1:
                 print('AI movement: ' + str(col+1))

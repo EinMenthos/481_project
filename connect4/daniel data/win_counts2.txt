@@ -1,3 +1,0 @@
-37,57,6
-
-//data collected from 100 games with default EF vs EF with 7 trap.

@@ -215,7 +215,7 @@ def evaluate_window(window, player, EFmode):
 
     #only AI2 will run customized EFs
     if EFmode and EV1set:
-        print("using strategy 1: trying to conquer the center")
+        # print("using strategy 1: trying to conquer the center")
         # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
         center_col = COLS // 2
         for i in range(4):
@@ -223,7 +223,7 @@ def evaluate_window(window, player, EFmode):
                 score += abs(center_col - (i + 1))  # Adjust the weight as needed
     
     if EFmode and EV2set:
-        print("using strategy 2: building a 7 trap.")
+        # print("using strategy 2: building a 7 trap.")
         # 7-trap strategy - ATK
         # Focuses on a particular 4-piece configuration with one player's piece at each end.
         # It looks for a configuration where there is one piece of the current player (player), three empty spaces (EMPTY), and the player's pieces are at both ends of the configuration (window[0] and window[3]).
@@ -233,7 +233,7 @@ def evaluate_window(window, player, EFmode):
                 score += 10
     
     if EFmode and EV3set:
-        print("using strategy 3: evaluating surrounding discs.")
+        # print("using strategy 3: evaluating surrounding discs.")
         # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
         for i in range(4):
             # Check left
@@ -252,14 +252,14 @@ def evaluate_window(window, player, EFmode):
             if i % 2 == 0 and window[i] == player and window[(i + 2) % 4] == player:
                 score += 1
     if EFmode and EV4set:
-        print("using strategy 4: block opponent's trap.")
+        # print("using strategy 4: block opponent's trap.")
         # Evaluate blocking opponent's trap - DEFENSIVE
         for i in range(2):
             if window[i] == opponent and window[i + 2] == opponent and window[i + 1] == EMPTY and window[(i + 3) % 4] == EMPTY:
                 score -= 8
 
     if EFmode and EV5set:
-        print("using strategy 5: 7 trap.")
+        # print("using strategy 5: 7 trap.")
         # 7 trap again
         # checks for two different 4-piece configurations, both involving two consecutive player's pieces followed by two empty spaces.
         # iterates over two sets of positions in the window list. For each set, it checks if the player has two consecutive pieces (window[i] and window[i + 2]), followed by two empty spaces (window[i + 1] and window[(i + 3) % 4]).
@@ -270,7 +270,7 @@ def evaluate_window(window, player, EFmode):
 
     if EFmode and EV6set:
          # Check for horizontal fork
-        print("using strategy 6: horizontal fork.")
+        # print("using strategy 6: horizontal fork.")
         if window.count(player) == 2 and window.count(EMPTY) == 2:
             if window.count(opponent) == 1:
                 score += 10

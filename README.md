@@ -7,17 +7,13 @@ Daniel Wu d.wu@csu.fullerton.edu
 
 Pedro Morales pedrom2@csu.fullerton.edu
 
-how to run:
+how to run the game with UI(from root folder):
 
-python3 game.py
+pip install
+
+python main.py
 
 
-ideas:
+how to set an Evaluation Function from terminal:
 
--AI vs AI - test with different depths and minimax vs alpha-beta prunning (when comparing times)
-
--create a tutorial that teach the rules and some strategies?
-
--hints (best next move that a player can do)
-
--death flag (end game in 5 turns)
+cd connect4; python game.py --ev1 --ev2 --ev3 --ev4 --ev5 --ev6

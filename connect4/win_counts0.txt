@@ -1,3 +1,0 @@
-41,53,6
-
-//data collected from 100 games with default EF vs default EF.

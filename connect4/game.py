@@ -89,7 +89,7 @@ def get_player_move():
                 board_copy = board.copy()
                 make_move(board_copy, col, COMPUTER)
                 d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
-                score = minimax(board_copy, d, False, -float('inf'), float('inf'), 0)  # Depth can be adjusted.
+                score = minimax(board_copy, d, False, -float('inf'), float('inf'), False)  # Depth can be adjusted.
                 if score > best_score:
                     best_score = score
                     best_move = col
@@ -121,7 +121,7 @@ def get_computer_move(board):
             board_copy = board.copy()
             make_move(board_copy, col, COMPUTER)
             d = random.randint(3, 3)  # Randomly select a depth between 2 and 4
-            score = minimax(board_copy, d, False, -float('inf'), float('inf'), evalFuncMode)  # Depth can be adjusted.
+            score = minimax(board_copy, d, False, -float('inf'), float('inf'), True)  # Depth can be adjusted.
 
             if score > best_score:
                 best_score = score
@@ -191,17 +191,12 @@ def evaluate_board(board, EFmode):
                 score += evaluate_window(window, COMPUTER, EFmode)
 
         return score
-    #if evalFuncMode == 1:
-    #    print("using strategy 1: trying to conquer the center")
-    #if evalFuncMode == 2:
-    #    print("using strategy 2: building a 7 trap.")
-    #if evalFuncMode == 3:
-    #    print("using strategy 3: evaluating surrounding discs.")
 
 
 def evaluate_window(window, player, EFmode):
     score = 0
     opponent = PLAYER if player == COMPUTER else COMPUTER
+
 
     if window.count(player) == 4:
         score += 100
@@ -213,24 +208,27 @@ def evaluate_window(window, player, EFmode):
     if window.count(opponent) == 3 and window.count(EMPTY) == 1:
         score -= 4
 
-    if EFmode == 1 or EFmode == -2:
-        #print("using strategy 1: trying to conquer the center")
+    #only AI2 will run customized EFs
+    if EFmode and EV1set:
+        # print("using strategy 1: trying to conquer the center")
         # Conquer the center strategy: Assign higher scores to positions closer to the center - ATK
         center_col = COLS // 2
         for i in range(4):
             if window[i] == player:
                 score += abs(center_col - (i + 1))  # Adjust the weight as needed
     
-    if EFmode == 2 or EFmode == -1:
-        #print("using strategy 2: building a 7 trap.")
+    if EFmode and EV2set:
+        # print("using strategy 2: building a 7 trap.")
         # 7-trap strategy - ATK
+        # Focuses on a particular 4-piece configuration with one player's piece at each end.
+        # It looks for a configuration where there is one piece of the current player (player), three empty spaces (EMPTY), and the player's pieces are at both ends of the configuration (window[0] and window[3]).
         if window.count(player) == 1 and window.count(EMPTY) == 3:
             # Check for a "7-trap" pattern: [X, ., ., O] or [O, ., ., X]
             if window[0] == player and window[3] == player:
                 score += 10
     
-    if EFmode == 3 or EFmode == -2:
-        #print("using strategy 3: evaluating surrounding discs.")
+    if EFmode and EV3set:
+        # print("using strategy 3: evaluating surrounding discs.")
         # Evaluate surrounding discs: Check left, right, up, down, and both diagonals - ATK
         for i in range(4):
             # Check left
@@ -248,42 +246,58 @@ def evaluate_window(window, player, EFmode):
             # Check both diagonals
             if i % 2 == 0 and window[i] == player and window[(i + 2) % 4] == player:
                 score += 1
-    if EFmode == 4 or EFmode == -2:
+
+    if EFmode and EV4set:
+        # print("using strategy 4: block opponent's trap.")
         # Evaluate blocking opponent's trap - DEFENSIVE
         for i in range(2):
             if window[i] == opponent and window[i + 2] == opponent and window[i + 1] == EMPTY and window[(i + 3) % 4] == EMPTY:
                 score -= 8
 
-    if EFmode == 5 or EFmode == -1:
-        #7 trap again
-        for i in range(2):
-            if window[i] == player and window[i + 2] == player and window[i + 1] == EMPTY and window[(i + 3) % 4] == EMPTY:
-                score += 10
+    if EFmode and EV5set:
+        # Check for forks
+        empty_count = window.count(EMPTY)
+        player_count = window.count(player)
+        opponent_count = window.count(opponent)
 
-    if EFmode == 6 or EFmode == -2:
-         # Check for horizontal fork
-        if window.count(player) == 2 and window.count(EMPTY) == 2:
-            if window.count(opponent) == 1:
-                score += 10
-        
+        # Check for horizontal fork
+        if empty_count == 2 and player_count == 2 and opponent_count == 1:
+            score += 10
+
         # Check for vertical fork
-        if window.count(player) == 1 and window.count(EMPTY) == 3:
-            if window.count(opponent) == 2:
-                score += 10
-        
+        if empty_count == 3 and player_count == 1 and opponent_count == 2:
+            score += 10
+
         # Check for diagonal (positive slope) fork
-        if window.count(player) == 2 and window.count(EMPTY) == 2:
-            if window.count(opponent) == 1:
-                score += 10
-        
+        if empty_count == 2 and player_count == 2 and opponent_count == 1:
+            score += 10
+
         # Check for diagonal (negative slope) fork
-        if window.count(player) == 1 and window.count(EMPTY) == 3:
-            if window.count(opponent) == 2:
-                score += 10
+        if empty_count == 3 and player_count == 1 and opponent_count == 2:
+            score += 10
 
+    if EFmode and EV6set:
+        # Check for forks
+        empty_count = window.count(EMPTY)
+        player_count = window.count(player)
+        opponent_count = window.count(opponent)
+
+        # Check for horizontal fork
+        if empty_count == 2 and player_count == 2 and opponent_count == 1:
+            score += 25
+
+        # Check for vertical fork
+        if empty_count == 3 and player_count == 1 and opponent_count == 2:
+            score += 25
+
+        # Check for diagonal (positive slope) fork
+        if empty_count == 2 and player_count == 2 and opponent_count == 1:
+            score += 25
+
+        # Check for diagonal (negative slope) fork
+        if empty_count == 3 and player_count == 1 and opponent_count == 2:
+            score += 25
     return score
-
-
 
 def main():
     print("Welcome to Connect Four!")
@@ -291,8 +305,22 @@ def main():
     global player_wins, computer_wins, draws
     
     #evalFuncMode 0 = default, 1 = center, 2 = seven trap, 3 = surrounding, 
-    global evalFuncMode
-    evalFuncMode = -1
+    #global evalFuncMode
+    #evalFuncMode = -1
+
+    #variables to hold the info from settings screen
+    global EV1set
+    global EV2set
+    global EV3set
+    global EV4set
+    global EV5set
+    global EV6set
+    EV1set = False
+    EV2set = False
+    EV3set = False
+    EV4set = False
+    EV5set = False
+    EV6set = True
 
     #game mode 0 = AI vs AI, mode 1 = player vs AI
     global gameMode

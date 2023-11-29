@@ -1,3 +1,0 @@
-42,53,5
-
-//data collected from 100 games with default EF vs EF with fork strategy.

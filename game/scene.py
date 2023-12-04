@@ -211,8 +211,8 @@ class VideoGameScene(Scene):
             {"name": "EV2: 7 trap", "selected": False},
             {"name": "EV3: Surrounding discs", "selected": False},
             {"name": "EV4: Block 7 traps", "selected": False},
-            {"name": "EV5: 7 trap2", "selected": False},
-            {"name": "EV6: Horizontal trap", "selected": False}
+            {"name": "EV5: fork 10", "selected": False},
+            {"name": "EV6: fork 25", "selected": False}
         ]
 
     def set_efs(self, efs):
@@ -246,8 +246,8 @@ class SettingsScene(Scene):
             {"name": "EV2: 7 trap", "selected": False},
             {"name": "EV3: Surrounding discs", "selected": False},
             {"name": "EV4: Block 7 traps", "selected": False},
-            {"name": "EV5: 7 trap2", "selected": False},
-            {"name": "EV6: Horizontal trap", "selected": False}
+            {"name": "EV5: fork 10", "selected": False},
+            {"name": "EV6: fork 25", "selected": False}
         ]
         self._buttons = [
             Button(self._screen, (150, int(self.screen_width * 0.125)), "Back", 0, 100, 50, (0, 0, 255))
@@ -271,7 +271,7 @@ class SettingsScene(Scene):
         # Draw title
         title_rect = pygame.Rect(self.screen_width / 2 - 150, 50, 300, 100)
         font = pygame.font.Font(None, 100)
-        text = font.render("Settings AI2", True, (255, 255, 255))
+        text = font.render("Settings AI 2", True, (255, 255, 255))
         textpos = text.get_rect()
         textpos.centerx = title_rect.centerx
         textpos.centery = title_rect.centery

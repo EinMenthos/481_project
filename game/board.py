@@ -233,33 +233,51 @@ class Board:
                     score -= 8
 
         if EFmode and player.ev5_set:
-            # print("using strategy 5: 7 trap.")
-            #7 trap again
-            for i in range(2):
-                if window[i] == player.color and window[i + 2] == player.color and window[i + 1] == "white" and window[(i + 3) % 4] == "white":
-                    score += 10
+            # Check for forks
+            # print("using strategy 5: fork10.")
+            empty_count = window.count("white")
+            player_count = window.count(player.color)
+            opponent_count = window.count(opponent.color)
+
+            # Check for horizontal fork
+            if empty_count == 2 and player_count == 2 and opponent_count == 1:
+                score += 5
+
+            # Check for vertical fork
+            if empty_count == 3 and player_count == 1 and opponent_count == 2:
+                score += 5
+
+            # Check for diagonal (positive slope) fork
+            if empty_count == 2 and player_count == 2 and opponent_count == 1:
+                score += 5
+
+            # Check for diagonal (negative slope) fork
+            if empty_count == 3 and player_count == 1 and opponent_count == 2:
+                score += 5
 
         if EFmode and player.ev6_set:
+            # Check for forks
+            # print("using strategy 6: fork25.")
+
+            empty_count = window.count("white")
+            player_count = window.count(player.color)
+            opponent_count = window.count(opponent.color)
+
             # Check for horizontal fork
-            # print("using strategy 6: horizontal fork.")
-            if window.count(player.color) == 2 and window.count("white") == 2:
-                if window.count(opponent.color) == 1:
-                    score += 10
-            
+            if empty_count == 2 and player_count == 2 and opponent_count == 1:
+                score += 10
+
             # Check for vertical fork
-            if window.count(player.color) == 1 and window.count("white") == 3:
-                if window.count(opponent.color) == 2:
-                    score += 10
-            
+            if empty_count == 3 and player_count == 1 and opponent_count == 2:
+                score += 5
+
             # Check for diagonal (positive slope) fork
-            if window.count(player.color) == 2 and window.count("white") == 2:
-                if window.count(opponent.color) == 1:
-                    score += 10
-            
+            if empty_count == 2 and player_count == 2 and opponent_count == 1:
+                score += 10
+
             # Check for diagonal (negative slope) fork
-            if window.count(player.color) == 1 and window.count("white") == 3:
-                if window.count(opponent.color) == 2:
-                    score += 10
+            if empty_count == 3 and player_count == 1 and opponent_count == 2:
+                score += 5
 
         return score
 
